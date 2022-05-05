@@ -1,0 +1,205 @@
+﻿@model List<RPA.Models.RPAGet>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center row">
+    <div class="col-3 offset-1 row">
+
+
+        <h4 class="mb-3">Upload RPA</h4>
+        <form class="needs-validation" id="formRPA">
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label for="NameRPA" class="form-label">Name RPA:</label>
+                    <input type="text" class="form-control" id="NameRPA" name="NameRPA" placeholder="Name:" value="" required="" tabindex="1">
+                    <div class="invalid-feedback">
+                        Valid first name is required.
+                    </div>
+                </div>
+
+                <div class="col-sm-6">
+                    <label for="dateFirstExecution" class="form-label">Date first execution:</label>
+                    <input type="date" class="form-control" id="dateFirstExecution" name="dateFirstExecution" placeholder="Date First Execution:" value="" required="" tabindex="2">
+                    <div class="invalid-feedback">
+                        Valid last name is required.
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <label for="FileRPA" class="form-label">File RPA:</label>
+                    <input type="file" class="form-control" id="FileRPA" name="FileRPA" placeholder="Choose your file" value="" required="" tabindex="3"
+                           accept=".py">
+                    <div class="invalid-feedback">
+                        Valid last name is required.
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <label>Days of week</label>
+            <div id="checkboxesDaysWeek" style="width: 30em; overflow-x: auto; white-space: nowrap;">
+                <input type="checkbox" value="0"> Sunday
+                <input type="checkbox" value="1"> Monday
+                <input type="checkbox" value="2"> Tuesday
+                <input type="checkbox" value="3"> Wednesday
+                <input type="checkbox" value="4"> Thursday
+                <input type="checkbox" value="5"> Friday
+                <input type="checkbox" value="6"> Saturday
+                <input type="hidden" name="DaysWeek" id="DaysWeek" value="" />
+            </div>
+
+            <hr class="my-4">
+            <label>Hours</label>
+            <div id="checkboxesHours" style="text-align: left; width: 30em; overflow-x: auto; white-space: nowrap;">
+                @for (int i = 0; i < 24; i++)
+                {
+                    String hourCheck = i.ToString("00");
+                    for (int j = 0; j <= 30; j = j + 30)
+                    {
+                        String minu = hourCheck + ":" + j.ToString("00");
+                        <input type="checkbox" value="@minu"> @minu
+                    }
+                }
+                <input type="hidden" name="Hours" id="Hours" value="" />
+            </div>
+
+            <hr class="my-4">
+        </form>
+        <button class="w-100 btn btn-primary btn-lg" onclick="enviar()">Create</button>
+    </div>
+    <div class="col-6 offset-1 row">
+        <div class="col-12 text-left">
+            <h4>Shows RPAs</h4>
+            <table id="example" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Name RPA</th>
+                        <th>First Execution</th>
+                        <th>Days of Week</th>
+                        <th>Hours</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.nameRPA</td>
+                            <td>@item.dateFirstExecution</td>
+                            <td>@item.WeekDayName</td>
+                            <td>@item.HoursT</td>
+                            <td>
+                                @if (!item.StatusRPA)
+                                {
+                                    <div style="width: 10px; background-color: red; height: 10px; border-radius: 10px;">
+                                    </div>
+                                }
+                                else 
+                                { 
+                                    <div style="width: 10px; background-color: green; height: 10px; border-radius: 10px;">
+                                    </div>
+                                }
+                            </td>
+                            <td>Actions- 
+                                <a href="@Url.Action("DownloadFile","RPA")/?ruta=@item.fileUrl&nameRPA=@item.nameRPA">
+                                    <img src="~/img/downloading.png" style="width: 20px;" />
+                                </a>
+                                <a href="" onclick="javascript:window.open('@Url.Action("EditRPA","RPA")/?idRPA=@item.idRPA',
+        '', 'resizable,height=500,width=1200')">
+                                    <img src="~/img/edit.png" style="width: 20px;" />
+                                </a>
+                                <a href="#" onclick="changueStatus(@item.idRPA)">
+                                    <img src="~/img/exchange.png" style="width: 20px;" />
+                                </a>
+                                
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<form id="formChangueStatus">
+    <input type="hidden" name="idRPA" id="idRPA" value="" />
+</form>
+<div id="message"></div>
+<script>
+    $(document).ready(function () {
+        $('#example').DataTable();
+    });
+
+
+    function changueStatus(idRPA) {
+        $('#idRPA').val(idRPA);
+        var data = new FormData($('#formChangueStatus')[0]); //nombre del formulario
+        AjaxPost('@Url.Action("ChangueStatus", "RPA")', data);
+    }
+
+    function enviar() {
+        $('#checkboxesDaysWeek input[type=checkbox]:checked').each(function () {
+            var newval = $('#DaysWeek').val() + "," + $(this).val();
+            $('#DaysWeek').val(newval);
+        });
+        var DaysWeek = $('#DaysWeek').val();
+        $('#DaysWeek').val(DaysWeek.substr(1, DaysWeek.length));
+
+
+        $('#checkboxesHours input[type=checkbox]:checked').each(function () {
+            var newval = $('#Hours').val() + "," + $(this).val();
+            $('#Hours').val(newval);
+        });
+        var Hours = $('#Hours').val();
+        $('#Hours').val(Hours.substr(1, Hours.length));
+
+        var data = new FormData($('#formRPA')[0]); //nombre del formulario
+        AjaxPost('@Url.Action("InsertRPA", "RPA")', data);
+        $('#Hours').val("");
+        $('#DaysWeek').val("");
+
+    }
+
+    function AjaxPost(url, data) {
+        $.ajax({
+            url: url, //nombre de la funcion del controlador para traer informacion
+            type: 'POST',
+            dataType: 'HTML',
+            data: data,
+            cache: false,
+            contentType: false,
+            processData: false,
+            beforeSend: function () {
+                $('#message').html('');
+            },
+            success: function (response) {
+                $('#loading').hide();
+                $('#message').html(response);
+                $('#text').val("");
+                dataHCS = [];
+                flag = true;
+                Swal.fire({
+                    type: 'success',
+                    title: 'Good job',
+                    text: 'Finish process'
+                }).then((result) => {
+                    /* Read more about isConfirmed, isDenied below */
+
+                    location.reload();
+
+                });
+
+            }, error: function (request, textStatus, errorThrown) {
+                console.log(request);
+                Swal.fire({
+                    title: 'Error!',
+                    html: '' + 'Status:' + textStatus + ' Error: ' + errorThrown + ' Request: ' + request.responseText,
+                    type: 'error',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'Ok!'
+                });
+            }
+        });
+    }
+
+</script>

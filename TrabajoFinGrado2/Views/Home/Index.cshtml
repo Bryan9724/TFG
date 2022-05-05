@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center row" style="padding-top: 200px;">
+    <div class="col-12">
+        <img src="~/img/UnirImg.png" alt="UNIR" />
+        <p>Trabajo fin de grado</p>
+        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    </div>
+    
+
+    <div class="col-6 offset-3">
+        <form id="LoginForm">
+            <p>@ViewData["UserName"]</p>
+            <p>@ViewData["password"]</p>
+            <div class="mb-3">
+                <label for="exampleInputEmail1" class="form-label">Email address</label>
+                <input type="email" class="form-control" id="userName" name="userName" aria-describedby="emailHelp" tabindex="1">
+                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+            </div>
+            <div class="mb-3">
+                <label for="exampleInputPassword1" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" tabindex="2">
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="exampleCheck1">
+                <label class="form-check-label" for="exampleCheck1">Check me out</label>
+            </div>
+            <button class="btn btn-primary" onclick="LoginForm()">Submit</button>
+        </form>
+    </div>
+    @if (ViewData["ErrorLogin"]!= null)
+            {
+                <script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Your user or password is wrong!',
+                        footer: '<a href="">Why do I have this issue?</a>'
+                    })
+                </script>
+            }
+    <div id="message"></div>
+    <script>
+        function LoginForm() {
+            var password = $('#password').val();
+            var user = $('#userName').val();
+            var url = "@Url.Action("Index", "RPA")/" + "?userName=" + user + "&password=" + password;
+            console.log(url);
+            try {
+                location.href = url;
+            } catch (e) {
+                console.log(e);
+            }
+            
+
+           /* var data = new FormData($('#LoginForm')[0]);
+             $.ajax({
+                url: '', //
+                type: 'POST',
+                dataType: 'HTML',
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function () {
+                    $('#message').html('');
+                },
+                success: function (response) {
+                    alert('Hola');
+                    $('#message').html(response);
+                }, error: function (request, textStatus, errorThrown) {
+                    console.log(request);
+                    $('#loading').hide();
+                    Swal.fire({
+                        title: 'Error!',
+                        text: '' + 'Status:' + textStatus + ' Error: ' + errorThrown + ' Request: ' + request.responseText,
+                        type: 'error',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Ok!'
+                    })
+                    //alert("Status: " + textStatus + " Error: " + errorThrown + " Request: " + request); alert("There is an error with the server. Please check the parameters for this report since probably there is a mismatch between. Example: there is no site TPCO Americas for Barranquilla city.");
+                }
+            });*/
+        }
+    </script>
+</div>
