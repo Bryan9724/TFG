@@ -1,4 +1,4 @@
-﻿@model List<RPA.Models.RPAGet>
+﻿@model RPA.Models.IndexView
 @{
     ViewData["Title"] = "Home Page";
 }
@@ -65,12 +65,15 @@
 
             <hr class="my-4">
         </form>
-        <button class="w-100 btn btn-primary btn-lg" onclick="enviar()">Create</button>
+        <div>
+            <button class="w-100 btn btn-primary btn-lg" onclick="enviar()">Create</button>
+        </div>
+        
     </div>
     <div class="col-6 offset-1 row">
         <div class="col-12 text-left">
             <h4>Shows RPAs</h4>
-            <table id="example" class="display" style="width:100%">
+            <table id="example" class="display table-responsive" style="width:100%">
                 <thead>
                     <tr>
                         <th>Name RPA</th>
@@ -78,11 +81,12 @@
                         <th>Days of Week</th>
                         <th>Hours</th>
                         <th>Status</th>
+                        <th>Authorized?</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @foreach (var item in Model.listRPAGet)
                     {
                         <tr>
                             <td>@item.nameRPA</td>
@@ -101,18 +105,47 @@
                                     </div>
                                 }
                             </td>
-                            <td>Actions- 
+                            <td>
+                                @if (!item.Authorized)
+                                {
+                                    <div style="width: 10px; background-color: red; height: 10px; border-radius: 10px;">
+                                    </div>
+                                }
+                                else 
+                                { 
+                                    <div style="width: 10px; background-color: green; height: 10px; border-radius: 10px;">
+                                    </div>
+                                }
+                            </td>
+                            <td>
                                 <a href="@Url.Action("DownloadFile","RPA")/?ruta=@item.fileUrl&nameRPA=@item.nameRPA">
-                                    <img src="~/img/downloading.png" style="width: 20px;" />
+                                    <img src="~/img/downloading.png" style="width: 20px;" title="Download" />
                                 </a>
+
                                 <a href="" onclick="javascript:window.open('@Url.Action("EditRPA","RPA")/?idRPA=@item.idRPA',
         '', 'resizable,height=500,width=1200')">
-                                    <img src="~/img/edit.png" style="width: 20px;" />
+                                    <img src="~/img/edit.png" style="width: 20px;" title="Edit" />
                                 </a>
                                 <a href="#" onclick="changueStatus(@item.idRPA)">
-                                    <img src="~/img/exchange.png" style="width: 20px;" />
+                                    <img src="~/img/exchange.png" style="width: 20px;" title="Change status"/>
                                 </a>
-                                
+                                @if (ViewData["Role"].ToString() == "1")
+                                {
+                                    if (item.Authorized)
+                                    {
+                                        <a href="#" onclick="changueAuthorized(@item.idRPA)">
+                                            <img src="~/img/authorization.png" style="width: 20px;" title="Authorized"/>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a href="#" onclick="changueAuthorized(@item.idRPA)">
+                                            <img src="~/img/unauthorized.png" style="width: 20px;" title="Unauthorized"/>
+                                        </a>
+                                    }
+
+                                }
+
                             </td>
                         </tr>
                     }
@@ -135,6 +168,12 @@
         $('#idRPA').val(idRPA);
         var data = new FormData($('#formChangueStatus')[0]); //nombre del formulario
         AjaxPost('@Url.Action("ChangueStatus", "RPA")', data);
+    }
+
+    function changueAuthorized(idRPA) {
+        $('#idRPA').val(idRPA);
+        var data = new FormData($('#formChangueStatus')[0]); //nombre del formulario
+        AjaxPost('@Url.Action("ChangueAuthorized", "RPA")', data);
     }
 
     function enviar() {

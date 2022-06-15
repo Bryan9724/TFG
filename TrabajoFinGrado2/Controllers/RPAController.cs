@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using RPA.Models;
+using User.Models; 
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -24,10 +25,30 @@ namespace TrabajoFinGrado2.Controllers
             _logger = logger;
         }
 
+        private String msjSucces = "<script>" +
+                    "Swal.fire({ " +
+                    "    type: 'success', " +
+                    "    title: 'Good job', " +
+                    "    text: 'Finish process' " +
+                    "}).then((result) => { " +
+                    "    location.reload(); " +
+                    "}); " +
+                    "</script>";
+        private String msjError = "<script>" +
+                    "Swal.fire({ " +
+                    "    type: 'error', " +
+                    "    title: 'We have a problem ', " +
+                    "    text: '<msj>' " +
+                    "}); " +
+                    "</script>";
+
         [HttpGet]
         public IActionResult EditRPA(int idRPA)
         {
             ViewData["where"] = "RPA";
+            ViewData["nameRole"] = HttpContext.Session.GetInt32("nameRole");
+            ViewData["nameUser"] = HttpContext.Session.GetInt32("UserName");
+            ViewData["Role"] = HttpContext.Session.GetInt32("Role");
             String query = "dbo.getRPAOne";
             ConnectModel connec = new ConnectModel();
             RPAGet RPAGet = new RPAGet();
@@ -136,6 +157,34 @@ namespace TrabajoFinGrado2.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        public String ChangueAuthorized(int idRPA)
+        {
+            String query = "dbo.ChangueAuthorized";
+            ConnectModel connec = new ConnectModel();
+            try
+            {
+                using (connec.con = new SqlConnection())
+                {
+                    using (connec.com = new SqlCommand(query, connec.con))
+                    {
+                        connec.com.CommandType = CommandType.StoredProcedure;
+                        connec.com.CommandTimeout = 120;
+                        connec.com.Parameters.AddWithValue("idRPA", SqlDbType.Int);
+                        connec.com.Parameters["idRPA"].Value = idRPA;
+                        connec.connectionString_noinit();
+                        connec.con.Open();
+                        connec.dr = connec.com.ExecuteReader();
+                    }
+                }
+
+                return msjSucces;
+            }
+            catch (Exception e)
+            {
+                return msjError.Replace("<msj>", e.Message);
+            }
+        }
 
         [HttpPost]
         public String ChangueStatus(int idRPA)
@@ -158,19 +207,11 @@ namespace TrabajoFinGrado2.Controllers
                     }
                 }
 
-                return "<script>" +
-                    "Swal.fire({ " +
-                    "    type: 'success', " +
-                    "    title: 'Good job', " +
-                    "    text: 'Finish process' " +
-                    "}).then((result) => { " +
-                    "    location.reload(); " +
-                    "}); " +
-                    "</script>";
+                return msjSucces;
             }
             catch (Exception e)
             {
-                return "";
+                return msjError.Replace("<msj>", e.Message);
             }
         }
 
@@ -183,7 +224,7 @@ namespace TrabajoFinGrado2.Controllers
             MemoryStream ms = new MemoryStream();
             downloadStream.CopyTo(ms);
 
-            return File(ms.ToArray(), System.Net.Mime.MediaTypeNames.Application.Octet, nameRPA + ".rpa");
+            return File(ms.ToArray(), System.Net.Mime.MediaTypeNames.Application.Octet, nameRPA + ".py");
         }
 
         [HttpPost]
@@ -322,6 +363,7 @@ namespace TrabajoFinGrado2.Controllers
                                 WeekDayName = connec.dr["WeekDayName"].ToString(),
                                 HoursT = connec.dr["HoursT"].ToString(),
                                 StatusRPA = Boolean.Parse(connec.dr["StatusRPA"].ToString()),
+                                Authorized = Boolean.Parse(connec.dr["Authorized"].ToString()),
                                 idRPA = int.Parse(connec.dr["idRPA"].ToString())
                             });
                             
@@ -329,7 +371,44 @@ namespace TrabajoFinGrado2.Controllers
                         connec.con.Close();
                     }
                 }
-                var model = listRPAGet;
+                UserGet user = new UserGet();
+                query = "dbo.getUserByUserPassword";
+                using (connec.con = new SqlConnection())
+                {
+                    using (connec.com = new SqlCommand(query, connec.con))
+                    {
+                        connec.com.CommandType = CommandType.StoredProcedure;
+                        connec.com.CommandTimeout = 120;
+                        connec.com.Parameters.AddWithValue("userName", SqlDbType.VarChar);
+                        connec.com.Parameters["userName"].Value = userName;
+                        connec.com.Parameters.AddWithValue("password", SqlDbType.VarChar);
+                        connec.com.Parameters["password"].Value = password;
+                        connec.connectionString_noinit();
+                        connec.con.Open();
+                        connec.dr = connec.com.ExecuteReader();
+
+                        if (connec.dr.Read())
+                        {
+                            user.idUser = int.Parse(connec.dr["idUser"].ToString());
+                            user.UserName = connec.dr["UserName"].ToString();
+                            user.Role = int.Parse(connec.dr["Role"].ToString());
+                            user.nameRole = connec.dr["nameRole"].ToString();
+                        }
+                        connec.con.Close();
+                    }
+                }
+                HttpContext.Session.SetInt32("Role", user.Role);
+                HttpContext.Session.SetString("UserName", user.UserName);
+                HttpContext.Session.SetString("nameRole", user.nameRole);
+
+                ViewData["nameRole"] = user.nameRole;
+                ViewData["nameUser"] = user.UserName;
+                ViewData["Role"] = user.Role;
+
+                IndexView indexView = new IndexView();
+                indexView.listRPAGet = listRPAGet;
+                indexView.user = user;
+                var model = indexView;
                 return View(model);
             }
             else
@@ -339,6 +418,18 @@ namespace TrabajoFinGrado2.Controllers
             }
 
         }
+
+        [HttpGet]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Remove("Role");
+            HttpContext.Session.Remove("UserName");
+            HttpContext.Session.Remove("nameRole");
+            HttpContext.Session.Clear();
+            
+            return RedirectToAction("Index", "Home");
+        }
+
 
     }
 }

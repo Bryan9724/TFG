@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using User.Models;
 
 namespace RPA.Models
 {
@@ -18,6 +19,7 @@ namespace RPA.Models
         public String WeekDayName { get; set; }
         public String HoursT { get; set; }
         public bool StatusRPA { get; set; }
+        public bool Authorized { get; set; }
     }
     public class RPADaysWeek
     {
@@ -38,5 +40,11 @@ namespace RPA.Models
         public List<RPADaysWeek> listRPADaysWeek { get; set; }
         public RPAGet rPAGet { get; set; }
         public String[] dayWeek { get; set; }
+    }
+
+    public class IndexView
+    {
+        public UserGet user { get; set; }
+        public List<RPAGet> listRPAGet { get; set; }
     }
 }
